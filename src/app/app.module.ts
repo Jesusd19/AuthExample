@@ -8,6 +8,7 @@ import { PriceComponent } from './components/price/price.component';
 import { ProtectedComponent } from './components/protected/protected.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AuthService } from './services/auth.service';
+import { AuthGuardService } from './services/auth-guard.service';
 
 @NgModule({
   declarations: [
@@ -22,7 +23,8 @@ import { AuthService } from './services/auth.service';
     AppRoutingModule
   ],
   providers: [
-    AuthService
+    AuthService,
+    AuthGuardService
   ],
   bootstrap: [AppComponent]
 })

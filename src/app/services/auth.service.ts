@@ -1,27 +1,27 @@
 // src/app/auth/auth.service.ts
 
-import { Injectable } from '@angular/core';
-import { Router } from '@angular/router';
-import * as auth0 from 'auth0-js';
+import { Injectable } from "@angular/core";
+import { Router } from "@angular/router";
+import * as auth0 from "auth0-js";
 
 @Injectable()
 export class AuthService {
-
   private _idToken: string;
   private _accessToken: string;
   private _expiresAt: number;
+  userProfile: any;
 
   auth0 = new auth0.WebAuth({
-    clientID: 'cyC1BGDqSggUN0Dtc2YLzQTP7z0g8cXg',
-    domain: 'exbook.auth0.com',
-    responseType: 'token id_token',
-    redirectUri: 'http://localhost:4200/callback',
-    scope: 'openid'
+    clientID: "cyC1BGDqSggUN0Dtc2YLzQTP7z0g8cXg",
+    domain: "exbook.auth0.com",
+    responseType: "token id_token",
+    redirectUri: "http://localhost:4200/callback",
+    scope: "openid profile"
   });
 
   constructor(public router: Router) {
-    this._idToken = '';
-    this._accessToken = '';
+    this._idToken = "";
+    this._accessToken = "";
     this._expiresAt = 0;
   }
 
@@ -40,11 +40,11 @@ export class AuthService {
   public handleAuthentication(): void {
     this.auth0.parseHash((err, authResult) => {
       if (authResult && authResult.accessToken && authResult.idToken) {
-        window.location.hash = '';
+        window.location.hash = "";
         this.localLogin(authResult);
-        this.router.navigate(['/home']);
+        this.router.navigate(["/home"]);
       } else if (err) {
-        this.router.navigate(['/home']);
+        this.router.navigate(["/home"]);
         console.log(err);
       }
     });
@@ -52,9 +52,9 @@ export class AuthService {
 
   private localLogin(authResult): void {
     // Set isLoggedIn flag in localStorage
-    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem("isLoggedIn", "true");
     // Set the time that the access token will expire at
-    const expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
+    const expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
     this._accessToken = authResult.accessToken;
     this._idToken = authResult.idToken;
     this._expiresAt = expiresAt;
@@ -65,7 +65,9 @@ export class AuthService {
       if (authResult && authResult.accessToken && authResult.idToken) {
         this.localLogin(authResult);
       } else if (err) {
-        alert(`Could not get a new token (${err.error}: ${err.error_description}).`);
+        alert(
+          `Could not get a new token (${err.error}: ${err.error_description}).`
+        );
         this.logout();
       }
     });
@@ -73,13 +75,13 @@ export class AuthService {
 
   public logout(): void {
     // Remove tokens and expiry time
-    this._accessToken = '';
-    this._idToken = '';
+    this._accessToken = "";
+    this._idToken = "";
     this._expiresAt = 0;
     // Remove isLoggedIn flag from localStorage
-    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem("isLoggedIn");
     // Go back to the home route
-    this.router.navigate(['/']);
+    this.router.navigate(["/"]);
   }
 
   public isAuthenticated(): boolean {
@@ -88,5 +90,17 @@ export class AuthService {
     return new Date().getTime() < this._expiresAt;
   }
 
+  public getProfile(cb): void {
+    if (!this._accessToken) {
+      throw new Error("Access Token must exist to fetch profile");
+    }
 
+    const self = this;
+    this.auth0.client.userInfo(this._accessToken, (err, profile) => {
+      if (profile) {
+        self.userProfile = profile;
+      }
+      cb(err, profile);
+    });
+  }
 }
